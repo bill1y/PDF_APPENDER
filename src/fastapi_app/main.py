@@ -1,4 +1,5 @@
 import base64
+import traceback
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
@@ -18,6 +19,7 @@ from src.common.utils import (
 )
 from src.common.redis_client import redis_client
 from src.fastapi_app.schemas import FileUpload, AddImages, FileResponse, FileMetadata, FileUidResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 
 @asynccontextmanager
@@ -29,7 +31,14 @@ async def lifespan(app: FastAPI):
     await redis_client.disconnect()
 
 
-app = FastAPI(title="PDF Manager API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="PDF Manager API", version="1.0.0", lifespan=lifespan, debug=True)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Разрешить все источники
+    allow_credentials=True,
+    allow_methods=["*"],  # Разрешить все методы (GET, POST, PUT, DELETE и т.д.)
+    allow_headers=["*"],  # Разрешить все заголовки
+)
 
 
 @app.post("/upload", response_model=FileUidResponse)
@@ -111,10 +120,8 @@ async def add_images_to_file(add_images: AddImages):
         )
 
         return {"message": "Images added successfully"}
-
-    except HTTPException:
-        raise
     except Exception as e:
+        print(f'Error adding images: {e} {traceback.format_exc()}')
         raise HTTPException(status_code=500, detail=f"Error adding images: {str(e)}")
 
 
@@ -173,10 +180,8 @@ async def delete_file(uid: str):
         await delete_file_metadata(uid)
 
         return {"message": "File deleted successfully"}
-
-    except HTTPException:
-        raise
     except Exception as e:
+        print(f'Error deleting file: {e} {traceback.format_exc()}')
         raise HTTPException(status_code=500, detail=f"Error deleting file: {str(e)}")
 
 

@@ -68,6 +68,9 @@ class RedisService:
 
     async def keys(self, pattern: str):
         return await self.redis_client.keys(pattern)
+    
+    async def delete(self, key: str):
+        return await self.redis_client.delete(key)
 
 
 redis_client = RedisService()

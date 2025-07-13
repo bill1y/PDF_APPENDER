@@ -64,7 +64,7 @@ async def get_all_files_metadata() -> List[Dict]:
     return files
 
 
-async def delete_file_metadata(redis_client, uid: str):
+async def delete_file_metadata(uid: str):
     """Delete file metadata from Redis"""
     await redis_client.delete(REDIS_FILE_METADATA_KEY.format(uid=uid))
 
@@ -81,6 +81,8 @@ def add_images_to_pdf(text: str | None, pdf_path: str, images_base64: List[str],
     reader = PdfReader(pdf_path)
     # Create PDF writer object for output
     writer = PdfWriter()
+    # process images
+    images_base64 = [preprocess_base64_image(image) for image in images_base64 if image]
 
     # Copy all existing pages from original PDF
     for page in reader.pages:
@@ -169,3 +171,16 @@ def add_images_to_pdf(text: str | None, pdf_path: str, images_base64: List[str],
         # Clean up temporary PDF file
         if os.path.exists(temp_pdf_path):
             os.unlink(temp_pdf_path)
+
+
+def preprocess_base64_image(data_url: str) -> base64:
+    # Убираем префикс до запятой
+    if data_url.startswith("data:image"):
+        header, base64_data = data_url.split(",", 1)
+    else:
+        base64_data = data_url
+    # Добавляем padding, если его не хватает
+    missing_padding = len(base64_data) % 4
+    if missing_padding:
+        base64_data += '=' * (4 - missing_padding)
+    return base64_data
