@@ -1,2 +1,0 @@
-
-Use `. venv/bin/activate`
