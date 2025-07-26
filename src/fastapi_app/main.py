@@ -11,6 +11,12 @@ from src.common.utils import (
 )
 from src.fastapi_app.schemas import AddImages
 from fastapi.middleware.cors import CORSMiddleware
+from pyngrok import ngrok
+from dotenv import load_dotenv
+import subprocess
+
+load_dotenv()  # take environment variables
+
 
 
 @asynccontextmanager
@@ -61,4 +67,13 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    from pyngrok import ngrok
+
+    port = int(os.getenv('SERVER_PORT', 8080))
+    ngrok_domain=os.getenv('NGROK_DOMAIN')
+    ngrok_token=os.getenv('NGROK_TOKEN')
+    ngrok.set_auth_token(ngrok_token)
+    public_url = ngrok.connect(port, domain=ngrok_domain)
+    print(f"------------- NGROK tunnel is opened: {public_url} -------------")
+
+    uvicorn.run(app, host="0.0.0.0", port=port)
