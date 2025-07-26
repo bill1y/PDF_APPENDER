@@ -10,3 +10,5 @@ psutil
 pydantic
 pyngrok
 python-dotenv
+pyinstaller
+pyfiglet

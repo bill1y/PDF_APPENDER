@@ -1,4 +1,5 @@
 import base64
+import sys
 import traceback
 
 from fastapi import FastAPI, HTTPException
@@ -14,6 +15,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from pyngrok import ngrok
 from dotenv import load_dotenv
 import subprocess
+
+if getattr(sys, 'frozen', False):
+    base_path = sys._MEIPASS
+else:
+    base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+
+dotenv_path = os.path.join(base_path, ".env")
+load_dotenv(dotenv_path)
 
 load_dotenv()  # take environment variables
 
@@ -63,17 +72,3 @@ async def root():
     """
     return {"message": "PDF Manager API is running"}
 
-
-
-if __name__ == "__main__":
-    import uvicorn
-    from pyngrok import ngrok
-
-    port = int(os.getenv('SERVER_PORT', 8080))
-    ngrok_domain=os.getenv('NGROK_DOMAIN')
-    ngrok_token=os.getenv('NGROK_TOKEN')
-    ngrok.set_auth_token(ngrok_token)
-    public_url = ngrok.connect(port, domain=ngrok_domain)
-    print(f"------------- NGROK tunnel is opened: {public_url} -------------")
-
-    uvicorn.run(app, host="0.0.0.0", port=port)
