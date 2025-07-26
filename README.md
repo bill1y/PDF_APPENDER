@@ -1,17 +1,19 @@
-# How to run
+# Requirements
+- SumatraPDF
+- install this - https://visualstudio.microsoft.com/visual-cpp-build-tools/ . When installing, select Desktop development with C++
+- run this: pip install --upgrade pip setuptools wheel
+- pip install -r .\requirements.txt
 
+# How to run
 ```bash
-docker compose up -d
+python -m src.fastapi_app.main
 ```
 
-## Stop
-
-```bash
-docker compose down
+# Usage example
+```
 ```
 
 # Docs
 ```bash
-http://localhost:8000/docs
+http://localhost:8080/docs
 ```
--

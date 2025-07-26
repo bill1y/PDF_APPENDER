@@ -4,75 +4,25 @@ import os
 import tempfile
 import uuid
 from io import BytesIO
-from typing import Optional, List, Dict
+from typing import List
 
 from PIL import Image
 from PyPDF2 import PdfReader, PdfWriter
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
-
-from src.common.consts import REDIS_FILE_METADATA_KEY
-from src.common.redis_client import redis_client
 from reportlab.lib.units import cm
+import psutil
 
 
-def generate_uid() -> str:
-    """Generate unique identifier"""
-    return str(uuid.uuid4())
-
-
-def decode_base64_file(base64_string: str) -> bytes:
-    """Decode base64 string to bytes"""
-    return base64.b64decode(base64_string)
-
-
-def save_file_to_disk(file_data: bytes, uid: str, files_dir: str = "files") -> str:
-    """Save file to disk with UID as filename"""
-    if not os.path.exists(files_dir):
-        os.makedirs(files_dir)
-
-    file_path = os.path.join(files_dir, f"{uid}.pdf")
-    with open(file_path, "wb") as f:
-        f.write(file_data)
-
-    return file_path
-
-
-async def save_file_metadata( uid: str, filename: str, location: str):
-    """Save file metadata to Redis"""
-    metadata = {
-        "filename": filename,
-        "location": location
-    }
-    await redis_client.set(REDIS_FILE_METADATA_KEY.format(uid=uid), metadata)
-
-
-async def get_file_metadata(uid: str) -> Optional[Dict]:
-    """Get file metadata from Redis"""
-    return await redis_client.get(REDIS_FILE_METADATA_KEY.format(uid=uid))
-
-
-async def get_all_files_metadata() -> List[Dict]:
-    """Get all files metadata from Redis"""
-    files = []
-    keys = await redis_client.keys(REDIS_FILE_METADATA_KEY.format(uid="*"))
-    for key in keys:
-        key = key.split(":")[1]
-        metadata = await get_file_metadata(key)
-        if metadata:
-            files.append({"uid": key, **metadata})
-    return files
-
-
-async def delete_file_metadata(uid: str):
-    """Delete file metadata from Redis"""
-    await redis_client.delete(REDIS_FILE_METADATA_KEY.format(uid=uid))
-
-
-def delete_file_from_disk(file_path: str):
-    """Delete file from disk"""
-    if os.path.exists(file_path):
-        os.remove(file_path)
+def get_opened_pdf_process() -> str | None:
+    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+        name = proc.info['name']
+        args = proc.info['cmdline']
+        if name and 'sumatrapdf' in name.lower():
+            for arg in reversed(args):
+                if arg.lower().endswith('.pdf'):
+                    return arg
+    return None
 
 
 def add_images_to_pdf(text: str | None, pdf_path: str, images_base64: List[str], output_path: str):

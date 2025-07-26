@@ -208,8 +208,3 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-
-
-
-# our files
-files/
